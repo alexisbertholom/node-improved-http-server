@@ -1,0 +1,26 @@
+{
+  "name": "node-improved-http-server",
+  "version": "0.1.0",
+  "description": "Promised-based wrapper of http.Server, with improved IPC capabilities",
+  "author": "Alexis Bertholom",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexisbertholom/node-improved-http-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alexisbertholom/node-improved-http-server/issues"
+  },
+  "homepage": "https://github.com/alexisbertholom/node-improved-http-server#readme",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf build dist",
+    "dist": "npm run clean && tsc --declaration --outDir dist"
+  },
+  "devDependencies": {
+    "@types/node": "^11.9.6",
+    "typescript": "^3.3.3333"
+  }
+}

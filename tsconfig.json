@@ -1,0 +1,36 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "target": "es2018",
+    "lib": [
+      "es2017"
+    ],
+    "module": "commonjs",
+    "sourceMap": true,
+    "pretty": false,
+    "removeComments": true,
+
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+
+    "baseUrl": "./src",
+    "rootDir": "./src",
+    "outDir": "./build"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "filesGlob": [
+    "src/**/*.ts"
+  ],
+  "files": [
+    "./src/index.ts"
+  ]
+}
