@@ -1,6 +1,9 @@
 import * as http from 'http';
 import * as net from 'net';
 import * as fs from 'fs';
+import * as util from 'util';
+
+const chmod = util.promisify(fs.chmod);
 
 type RequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => void;
 
@@ -97,12 +100,24 @@ export default class Server
     }
   }
 
+  private static node_compat__setSocketMode(serverOpts: IPCServerOpts)
+  {
+    const { path, readableAll, writableAll } = serverOpts;
+    let mode = 0o660;
+    if (readableAll)
+      mode |= 0o004;
+    if (writableAll)
+      mode |= 0o002;
+    return chmod(path, mode);
+  }
+
   private async _listenIPC(serverOpts: IPCServerOpts, opts: ListenOpts): Promise<void>
   {
     const { unlinkExistingFile, forceReplaceSocket, ...rest } = serverOpts;
     if (unlinkExistingFile || (unlinkExistingFile !== false && forceReplaceSocket))
       await this._tryUnlinkExistingSocket(serverOpts.path, forceReplaceSocket);
-    return this._listen({ ...rest, ...opts });
+    await this._listen({ ...rest, ...opts });
+    await Server.node_compat__setSocketMode(serverOpts);
   }
 
   private _listen(opts/*: TODO: server.listen options type*/): Promise<void>
