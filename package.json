@@ -1,6 +1,6 @@
 {
   "name": "node-improved-http-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Promised-based wrapper of http.Server, with improved IPC capabilities",
   "author": "Alexis Bertholom",
   "license": "ISC",

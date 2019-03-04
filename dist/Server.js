@@ -12,6 +12,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const http = require("http");
 const net = require("net");
 const fs = require("fs");
+const util = require("util");
+const chmod = util.promisify(fs.chmod);
 ;
 ;
 ;
@@ -58,11 +60,21 @@ class Server {
                 fs.unlinkSync(path);
         }
     }
+    static node_compat__setSocketMode(serverOpts) {
+        const { path, readableAll, writableAll } = serverOpts;
+        let mode = 0o660;
+        if (readableAll)
+            mode |= 0o004;
+        if (writableAll)
+            mode |= 0o002;
+        return chmod(path, mode);
+    }
     async _listenIPC(serverOpts, opts) {
         const { unlinkExistingFile, forceReplaceSocket } = serverOpts, rest = __rest(serverOpts, ["unlinkExistingFile", "forceReplaceSocket"]);
         if (unlinkExistingFile || (unlinkExistingFile !== false && forceReplaceSocket))
             await this._tryUnlinkExistingSocket(serverOpts.path, forceReplaceSocket);
-        return this._listen(Object.assign({}, rest, opts));
+        await this._listen(Object.assign({}, rest, opts));
+        await Server.node_compat__setSocketMode(serverOpts);
     }
     _listen(opts) {
         return new Promise((resolve, reject) => {

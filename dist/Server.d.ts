@@ -1,19 +1,19 @@
 /// <reference types="node" />
 import * as http from 'http';
 declare type RequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => void;
-interface TCPServerOpts {
+export interface TCPServerOpts {
     port: number;
     host?: string;
     ipv6Only?: boolean;
 }
-interface IPCServerOpts {
+export interface IPCServerOpts {
     path: string;
     readableAll?: boolean;
     writableAll?: boolean;
     unlinkExistingFile?: boolean;
     forceReplaceSocket?: boolean;
 }
-interface ListenOpts {
+export interface ListenOpts {
     backlog?: number;
     exclusive?: boolean;
 }
@@ -28,6 +28,7 @@ export default class Server {
     private _listenTCP;
     private _isSocketAvailable;
     private _tryUnlinkExistingSocket;
+    private static node_compat__setSocketMode;
     private _listenIPC;
     private _listen;
 }
