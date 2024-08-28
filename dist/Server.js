@@ -19,7 +19,41 @@ const chmod = util.promisify(fs.chmod);
 ;
 class Server {
     constructor(requestHandler) {
-        this._server = http.createServer(requestHandler);
+        this._activeRequestsCount = 0;
+        this._closeCallback = null;
+        this._server = http.createServer((req, res) => {
+            this._activeRequestsCount += 1;
+            try {
+                const result = requestHandler(req, res);
+                if (('then' in result) && typeof result.then === 'function' && ('catch' in result) && typeof result.catch === 'function') {
+                    return result.then(() => {
+                        this._activeRequestsCount -= 1;
+                        if (this._closeCallback && this._activeRequestsCount === 0)
+                            this._closeCallback();
+                    }).catch((error) => {
+                        this._activeRequestsCount -= 1;
+                        if (this._closeCallback && this._activeRequestsCount === 0)
+                            this._closeCallback();
+                        throw error;
+                    });
+                }
+                else {
+                    this._activeRequestsCount -= 1;
+                    if (this._closeCallback && this._activeRequestsCount === 0)
+                        this._closeCallback();
+                }
+                return result;
+            }
+            catch (error) {
+                this._activeRequestsCount -= 1;
+                if (this._closeCallback && this._activeRequestsCount === 0)
+                    this._closeCallback();
+                throw error;
+            }
+        });
+    }
+    get activeRequestsCount() {
+        return this._activeRequestsCount;
     }
     static getServerOpts(endpoint) {
         if (typeof (endpoint) === 'number')
@@ -34,6 +68,18 @@ class Server {
     listen(endpoint, opts = {}) {
         const serverOpts = Server.getServerOpts(endpoint);
         return (Server.isTCPServerOpts(serverOpts)) ? (this._listenTCP(serverOpts, opts)) : (this._listenIPC(serverOpts, opts));
+    }
+    close() {
+        this._server.close();
+        return new Promise((resolve) => {
+            if (this._activeRequestsCount === 0)
+                resolve();
+            else
+                this._closeCallback = () => {
+                    this._closeCallback = null;
+                    resolve();
+                };
+        });
     }
     get instance() {
         return this._server;

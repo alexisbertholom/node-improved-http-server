@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import * as http from 'http';
-declare type RequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => void;
+declare type RequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => any | Promise<any>;
 export interface TCPServerOpts {
     port: number;
     host?: string;
@@ -20,10 +20,14 @@ export interface ListenOpts {
 declare type EndpointT = (number | TCPServerOpts) | (string | IPCServerOpts);
 export default class Server {
     private _server;
+    private _activeRequestsCount;
+    private _closeCallback;
     constructor(requestHandler: RequestHandler);
+    readonly activeRequestsCount: number;
     private static getServerOpts;
     private static isTCPServerOpts;
     listen(endpoint: EndpointT, opts?: ListenOpts): Promise<void>;
+    close(): Promise<{}>;
     readonly instance: http.Server;
     private _listenTCP;
     private _isSocketAvailable;
