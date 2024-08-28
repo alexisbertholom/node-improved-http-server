@@ -5,7 +5,7 @@ import * as util from 'util';
 
 const chmod = util.promisify(fs.chmod);
 
-type RequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => void;
+type RequestHandler = (req: http.IncomingMessage, res: http.ServerResponse) => any | Promise<any>;
 
 export interface TCPServerOpts
 {
@@ -34,10 +34,39 @@ type EndpointT = (number | TCPServerOpts) | (string | IPCServerOpts);
 export default class Server
 {
   private _server: http.Server;
+  private _activeRequestsCount = 0;
 
   constructor(requestHandler: RequestHandler)
   {
-    this._server = http.createServer(requestHandler);
+    this._server = http.createServer((req, res) => {
+      this._activeRequestsCount += 1;
+      try
+      {
+        const result = requestHandler(req, res);
+        if (('then' in result) && typeof result.then === 'function' && ('catch' in result) && typeof result.catch === 'function')
+        {
+          return result.then(() => {
+            this._activeRequestsCount -= 1;
+          }).catch((error) => {
+            this._activeRequestsCount -= 1;
+            throw error;
+          });
+        }
+        else
+          this._activeRequestsCount -= 1;
+        return result;
+      }
+      catch (error)
+      {
+        this._activeRequestsCount -= 1;
+        throw error;
+      }
+    });
+  }
+
+  public get activeRequestsCount()
+  {
+    return this._activeRequestsCount;
   }
 
   private static getServerOpts(endpoint: EndpointT): TCPServerOpts | IPCServerOpts
