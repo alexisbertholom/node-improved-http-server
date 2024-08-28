@@ -35,6 +35,7 @@ export default class Server
 {
   private _server: http.Server;
   private _activeRequestsCount = 0;
+  private _closeCallback: (() => void) | null = null;
 
   constructor(requestHandler: RequestHandler)
   {
@@ -47,18 +48,28 @@ export default class Server
         {
           return result.then(() => {
             this._activeRequestsCount -= 1;
+            if (this._closeCallback && this._activeRequestsCount === 0)
+              this._closeCallback();
           }).catch((error) => {
             this._activeRequestsCount -= 1;
+            if (this._closeCallback && this._activeRequestsCount === 0)
+              this._closeCallback();
             throw error;
           });
         }
         else
+        {
           this._activeRequestsCount -= 1;
+          if (this._closeCallback && this._activeRequestsCount === 0)
+            this._closeCallback();
+        }
         return result;
       }
       catch (error)
       {
         this._activeRequestsCount -= 1;
+        if (this._closeCallback && this._activeRequestsCount === 0)
+          this._closeCallback();
         throw error;
       }
     });
@@ -91,6 +102,20 @@ export default class Server
     ) : (
       this._listenIPC(serverOpts, opts)
     );
+  }
+
+  public close()
+  {
+    this._server.close();
+    return new Promise((resolve) => {
+      if (this._activeRequestsCount === 0)
+        resolve();
+      else
+        this._closeCallback = () => {
+          this._closeCallback = null;
+          resolve();
+        };
+    });
   }
 
   public get instance(): http.Server
